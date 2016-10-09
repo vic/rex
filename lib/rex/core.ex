@@ -1,10 +1,12 @@
 defmodule Rex.Core do
-  import Rex
 
-  def drop([_ | stack]) do
-    stack
+  defmacro __using__(_) do
+    quote do
+      import Rex
+      import Rex.Core
+      import Rex.Stack
+      import Rex.Math
+    end
   end
-
-  drex swap(a, b) (b, a)
 
 end

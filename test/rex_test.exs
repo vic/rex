@@ -17,38 +17,38 @@ defmodule RexTest do
   use Rex
   doctest Rex
 
-  alias __MODULE__.Examples, as: E
+  import __MODULE__.Examples
 
   test "swap changes topmost two elements on data stack" do
     assert [2, 1, 3] == swap([1, 2, 3])
   end
 
   test "double duplicates topmost value" do
-    assert [6, 1] == E.double([3, 1])
+    assert [6, 1] == double([3, 1])
   end
 
-  test "can call Foo.swap with rex" do
+  test "can call swap with rex" do
     assert [2, 1, 3] == [1, 2, 3] |> rex(swap)
   end
 
   test "can call a sequence of functions" do
-    assert [6, 2, 5] == [1, 3, 5] |> rex(E.double ~> swap ~> E.double)
+    assert [6, 2, 5] == [1, 3, 5] |> rex(double ~> swap ~> double)
   end
 
   test "can place arguments as part of program" do
-    assert [6, 2, 5] == [] |> rex(5 ~> 3 ~> 1 ~> E.double ~> swap ~> E.double)
+    assert [6, 2, 5] == [] |> rex(5 ~> 3 ~> 1 ~> double ~> swap ~> double)
   end
 
   test "can use drex to define a name for a program" do
-    assert [6, 2, 5] == [] |> rex(5 ~> 3 ~> 1 ~> E.double_swap)
+    assert [6, 2, 5] == [] |> rex(5 ~> 3 ~> 1 ~> double_swap)
   end
 
   test "can call to native function reference" do
-    assert [16, 3] == [] |> rex(3 ~> 2 ~> 8 ~> E.mult)
+    assert [16, 3] == [] |> rex(3 ~> 2 ~> 8 ~> mult)
   end
 
   test "can call partial function" do
-    assert [24, 4] == [] |> rex(4 ~> 8 ~> E.triple)
+    assert [24, 4] == [] |> rex(4 ~> 8 ~> triple)
   end
 
   test "can apply kernel function directly" do
@@ -60,11 +60,11 @@ defmodule RexTest do
   end
 
   test "can apply partial refeference" do
-    assert [6] == [] |> rex([1, 2, 3] ~> E.sum)
+    assert [6] == [] |> rex([1, 2, 3] ~> sum)
   end
 
   test "can apply partial refeference defined in reverse" do
-    assert [6] == [] |> rex([1, 2, 3] ~> E.sumr)
+    assert [6] == [] |> rex([1, 2, 3] ~> sumr)
   end
 
 end

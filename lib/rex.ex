@@ -24,11 +24,40 @@ defmodule Rex do
     end
   end
 
+  defmacro rex(program) do
+    quote do
+      fn stack ->
+        stack |> unquote(piped(program))
+      end
+    end
+  end
 
   defmacro rex(stack, program) do
     quote do
       unquote(stack) |> unquote(piped(program))
     end
+  end
+
+  def compile(quoted) do
+    {fun, _} =
+      quoted
+      |> Enum.reduce(fn a, b -> {:~>, [], [a, b]} end)
+      |> piped
+      |> fn rex -> quote(do: fn stack -> stack |> unquote(rex) end) end.()
+      |> Code.eval_quoted
+    fun
+  end
+
+  defp quoted({:~>, _, [a, b]}, rest) do
+    [b | quoted(a, rest)]
+  end
+
+  defp quoted({:<~, _, [a, b]}, rest) do
+    quoted(a, []) ++ quoted(b, rest)
+  end
+
+  defp quoted(x, rest) do
+    [x | rest]
   end
 
   defp piped({:~>, _, [a, b]}) do
@@ -40,6 +69,13 @@ defmodule Rex do
   defp piped({:<~, _, [a, b]}) do
     quote do
       unquote(piped(b)) |> unquote(piped(a))
+    end
+  end
+
+  defp piped({:q, _, [program]}) do
+    list = program |> quoted([]) |> Macro.escape
+    quote do
+      (fn stack when is_list(stack) -> [unquote(list) | stack] end).()
     end
   end
 

@@ -9,4 +9,8 @@ defmodule Rex.Core do
     end
   end
 
+  def r([quoted | stack]) do
+    Rex.compile(quoted).(stack)
+  end
+
 end

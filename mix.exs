@@ -41,9 +41,6 @@ defmodule Rex.Mixfile do
   def description do
     """
     Concatenative Elixir macro language.
-
-
-    Rex 
     """
   end
 

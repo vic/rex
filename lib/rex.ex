@@ -16,14 +16,6 @@ defmodule Rex do
     end
   end
 
-  defmacro drex({name, _, [program = {p, _, _}]}) when p == :~> or p == :<~ do
-    quote do
-      def unquote(name)(stack) when is_list(stack) do
-        stack |> unquote(piped(program))
-      end
-    end
-  end
-
   defmacro drex({name, _, [program]}) do
     quote do
       def unquote(name)(stack) when is_list(stack )do
@@ -56,12 +48,33 @@ defmodule Rex do
     end
   end
 
-  defp piped({:/, _, [{ref, _, []}, arity]}) when is_integer(arity) do
+  defp piped({:/, _, [{ref, _, []}, 0]}) do
+    quote do
+      (fn stack when is_list(stack) -> [unquote(ref)() | stack] end).()
+    end
+  end
+
+  defp piped({:/, _, [{ref, _, []}, arity]}) when arity > 0 do
     vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
     quote do
       (fn [unquote_splicing(Enum.reverse(vars)) | stack] ->
-        [unquote(ref)(unquote_splicing(vars)) | stack] end
-      ).()
+        [unquote(ref)(unquote_splicing(vars)) | stack]
+      end).()
+    end
+  end
+
+  defp piped({:/, _, [ref = {a, _, b}, 0]}) when is_atom(a) and is_atom(b) do
+    quote do
+      (fn stack when is_list(stack) -> [unquote(ref) | stack] end).()
+    end
+  end
+
+  defp piped({:/, _, [{a, _, b}, arity]}) when is_atom(a) and is_atom(b) and arity > 0 do
+    vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
+    quote do
+      (fn [unquote_splicing(Enum.reverse(vars)) | stack] ->
+        [unquote(a)(unquote_splicing(vars)) | stack]
+      end).()
     end
   end
 

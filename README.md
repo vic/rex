@@ -27,7 +27,7 @@ Rex also has a `<~` operator which just pushes values in the reverse order:
 `rex(add <~ 2 <~ 1)` will result on `[add, 2, 1]`.
 
 
-The following example uses functions from `Rex.Stack` for stack manipulation
+The following example uses functions from `Rex.Core` for stack manipulation
 and `Rex.Math` that defines aliases to standard elixir math operators.
 
 ```elixir

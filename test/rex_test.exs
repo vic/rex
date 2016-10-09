@@ -12,6 +12,10 @@ defmodule Rex.Examples do
 
   drex sum3(c, b, a) (a + b + c)
   drex quq           rex(1 ~> 2)
+
+  def answer, do: 42
+  def square(x), do: x * x
+
 end
 
 defmodule Rex.ExamplesTest do
@@ -68,6 +72,22 @@ defmodule Rex.ExamplesTest do
 
   test "can apply partial refeference defined in reverse" do
     assert [6] == [] |> rex([1, 2, 3] ~> sumr)
+  end
+
+  test "can push local function reference" do
+    assert [&Rex.Examples.answer/0] == [] |> rex(&answer/0)
+  end
+
+  test "can call remote function with zero arity" do
+    assert [42] == [] |> rex(Rex.Examples.answer/0)
+  end
+
+  test "can call local function with zero arity" do
+    assert [42] == [] |> rex(answer/0)
+  end
+
+  test "can call local function with non-zero arity" do
+    assert [25] == [5] |> rex(square/1)
   end
 
 end

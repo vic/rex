@@ -3,4 +3,5 @@ defmodule Rex.Math do
 
   drex add Kernel.+/2
   drex mul Kernel.*/2
+
 end

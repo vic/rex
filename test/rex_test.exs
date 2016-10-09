@@ -107,7 +107,7 @@ defmodule Rex.ExamplesTest do
   end
 
   test "run executes a quoted program on top of stack with the rest of the stack" do
-    assert [3] = [] |> rex(q(1 ~> 2 ~> Kernel.+/2) ~> r)
+    assert [5, 4] = [3, 4] |> rex(q(2 ~> Kernel.+/2) ~> r)
   end
 
 

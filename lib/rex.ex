@@ -72,10 +72,18 @@ defmodule Rex do
     end
   end
 
-  defp piped({:q, _, [program]}) do
+  defp piped({:quote, _, [program]}) do
     list = program |> quoted([]) |> Macro.escape
     quote do
       (fn stack when is_list(stack) -> [unquote(list) | stack] end).()
+    end
+  end
+
+  defp piped({:unquote, _, x}) when is_atom(x) do
+    quote do
+      (fn [quoted | stack] when is_list(quoted) ->
+        compile(quoted).(stack)
+      end).()
     end
   end
 

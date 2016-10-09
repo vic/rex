@@ -98,16 +98,16 @@ defmodule Rex.ExamplesTest do
     assert capture_io(fun) == "[5]\n"
   end
 
-  test "rex pushes a Rex program with ~> into the stack" do
-    assert [[{:foo, _, _}, 2, 1]] = [] |> rex(q(1 ~> 2 ~> foo))
+  test "quote pushes a Rex program with ~> into the stack" do
+    assert [[{:foo, _, _}, 2, 1]] = [] |> rex(quote(1 ~> 2 ~> foo))
   end
 
-  test "rex pushes a Rex program with <~ into the stack" do
-    assert [[{:foo, _, _}, 2, 1]] = [] |> rex(q(foo <~ 2 <~ 1))
+  test "quote pushes a Rex program with <~ into the stack" do
+    assert [[{:foo, _, _}, 2, 1]] = [] |> rex(quote(foo <~ 2 <~ 1))
   end
 
-  test "run executes a quoted program on top of stack with the rest of the stack" do
-    assert [5, 4] = [3, 4] |> rex(q(2 ~> Kernel.+/2) ~> r)
+  test "unquote executes a quoted program on top of stack with the rest of the stack" do
+    assert [5, 4] = [3, 4] |> rex(quote(2 ~> Kernel.+/2) ~> unquote)
   end
 
 

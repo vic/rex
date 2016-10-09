@@ -39,7 +39,7 @@ assert [6] == [] |> rex([1, 2, 3] ~> sumr)
 
     ```elixir
     def deps do
-      [{:rex, "~> 0.0.1"}]
+      [{:rex, "~> 0.1.0"}]
     end
     ```
 

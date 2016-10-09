@@ -37,6 +37,8 @@ iex> [4, 5] |> rex(3 ~> 2 ~> 1 ~> add ~> mul ~> swap)
 [4, 9, 5] 
 ```
 
+More examples available as [tests](https://github.com/vic/rex/blob/master/test/rex_test.exs)
+
 
 
 #### [Pointless programming](https://en.wikipedia.org/wiki/Tacit_programming)

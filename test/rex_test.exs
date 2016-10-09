@@ -20,6 +20,7 @@ end
 
 defmodule Rex.ExamplesTest do
   use ExUnit.Case
+  import ExUnit.CaptureIO
 
   use Rex
   doctest Rex
@@ -88,6 +89,13 @@ defmodule Rex.ExamplesTest do
 
   test "can call local function with non-zero arity" do
     assert [25] == [5] |> rex(square/1)
+  end
+
+  test "show prints the current stack" do
+    fun = fn ->
+      assert [5] == [5] |> rex(show)
+    end
+    assert capture_io(fun) == "[5]\n"
   end
 
 end

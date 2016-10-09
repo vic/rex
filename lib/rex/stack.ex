@@ -1,9 +1,14 @@
 defmodule Rex.Stack do
   import Rex
 
+  drex swap(a, b) (b, a)
+
   def drop([_ | stack]) do
     stack
   end
 
-  drex swap(a, b) (b, a)
+  def show(stack) do
+    IO.inspect stack
+  end
+
 end

@@ -18,11 +18,12 @@ defmodule Rex do
 
   defmacro drex({name, _, [program]}) do
     quote do
-      def unquote(name)(stack) when is_list(stack )do
+      def unquote(name)(stack) when is_list(stack) do
         stack |> unquote(piped(program))
       end
     end
   end
+
 
   defmacro rex(stack, program) do
     quote do

@@ -1,4 +1,4 @@
-defmodule RexTest.Examples do
+defmodule Rex.Examples do
   use Rex
 
   drex double(a)     (a * 2)
@@ -6,18 +6,21 @@ defmodule RexTest.Examples do
   drex mult          Kernel.*/2
   drex triple        3 ~> mult
   drex puts          IO.puts/1 ~> drop
+
   drex sum           0 ~> (&Kernel.+/2) ~> List.foldr/3
   drex sumr          List.foldr/3 <~ (&Kernel.+/2) <~ 0
 
+  drex sum3(c, b, a) (a + b + c)
+  drex quq           rex(1 ~> 2)
 end
 
-defmodule RexTest do
+defmodule Rex.ExamplesTest do
   use ExUnit.Case
 
   use Rex
   doctest Rex
 
-  import __MODULE__.Examples
+  import Rex.Examples
 
   test "swap changes topmost two elements on data stack" do
     assert [2, 1, 3] == swap([1, 2, 3])

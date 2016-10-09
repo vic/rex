@@ -1,16 +1,5 @@
 defmodule Rex do
 
-  @moduledoc ~S"""
-
-  ## Examples
-
-      iex> # drop: removes the topmost element from the stack
-      iex> use Rex
-      ...> [1, 2, 3] |> rex(drop)
-      [2, 3]
-
-  """
-
   defmacro __using__(_) do
     quote do
       import Rex

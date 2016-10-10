@@ -15,6 +15,11 @@ defmodule Rex.Examples do
   def answer, do: 42
   def square(x), do: x * x
 
+  drex tatata do
+    triple show
+    swap double
+  end
+
 end
 
 defmodule Rex.ExamplesTest do
@@ -133,12 +138,25 @@ defmodule Rex.ExamplesTest do
     assert [12] = [4] |> rex(ifte <~ true <~ quote(mult <~ 3) <~ quote(:noop))
   end
 
+  test "rex can take a do with a line" do
+    assert [3, 12, 5] == [3, 4, 5] |> rex(do: swap triple swap)
+  end
+
   test "rex can take a multiline block with one word per line" do
-    assert [3] == [] |> (rex do
+    assert [9] == [] |> (rex do
       1
       2
       Kernel.+/2
+      Rex.Examples.triple
     end)
   end
+
+  test "defined function with do performs in order" do
+    fun = fn ->
+      assert [10, 12] == [4, 5] |> rex(tatata)
+    end
+    assert capture_io(fun) == "[12, 5]\n"
+  end
+
 
 end

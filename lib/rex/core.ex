@@ -111,8 +111,8 @@ defmodule Rex.Core do
     end
   end
 
-  defp unroll_expr([do: {:__block__, _, exprs}]) do
-    Enum.reverse(exprs)
+  defp unroll_expr(expr = [do: _]) do
+    unroll_do(expr)
   end
 
   defp unroll_expr({:~>, _, [a, b]}) do
@@ -125,6 +125,29 @@ defmodule Rex.Core do
 
   defp unroll_expr(expr) do
     [expr]
+  end
+
+  defp unroll_do([do: line]) do
+    unroll_do({:line, line}) |> List.flatten |> Enum.reverse
+  end
+
+  defp unroll_do([do: {:__block__, _, lines}]) do
+    Enum.map(lines, fn line -> unroll_do({:line, line}) end)
+    |> List.flatten
+    |> Enum.reverse
+  end
+
+  defp unroll_do({:line, expr = {name, _, _}})
+  when (name == :/ or name == :&) do
+    unroll_expr(expr)
+  end
+
+  defp unroll_do({:line, {name, loc, args}}) when length(args) > 0 do
+    [{name, loc, []} | (for a <- args, do: unroll_do({:line, a}))]
+  end
+
+  defp unroll_do({:line, expr}) do
+    unroll_expr(expr)
   end
 
 end

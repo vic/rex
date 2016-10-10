@@ -34,6 +34,10 @@ defmodule Rex do
     rex_def({:def, :stack_expr}, {name, expr}, __CALLER__)
   end
 
+  defmacro drex({name, _, nil}, expr = [do: _]) do
+    rex_def({:def, :stack_expr}, {name, expr}, __CALLER__)
+  end
+
   @doc """
   Compile a Rex expression into an Elixir function.
 

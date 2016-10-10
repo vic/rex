@@ -3,7 +3,7 @@ defmodule Rex.Mixfile do
 
   def project do
     [app: :rex,
-     version: "0.1.0-alpha1",
+     version: "0.1.0-alpha2",
      elixir: "~> 1.3",
      description: description,
      package: package,

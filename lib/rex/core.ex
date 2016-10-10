@@ -111,6 +111,10 @@ defmodule Rex.Core do
     end
   end
 
+  defp unroll_expr([do: {:__block__, _, exprs}]) do
+    Enum.reverse(exprs)
+  end
+
   defp unroll_expr({:~>, _, [a, b]}) do
     unroll_expr(b) ++ unroll_expr(a)
   end

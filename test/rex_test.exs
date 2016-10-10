@@ -133,4 +133,12 @@ defmodule Rex.ExamplesTest do
     assert [12] = [4] |> rex(ifte <~ true <~ quote(mult <~ 3) <~ quote(:noop))
   end
 
+  test "rex can take a multiline block with one word per line" do
+    assert [3] == [] |> (rex do
+      1
+      2
+      Kernel.+/2
+    end)
+  end
+
 end

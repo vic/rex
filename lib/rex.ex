@@ -12,7 +12,7 @@ defmodule Rex do
   import Rex.Core
 
   defmacro drex({{name, _, patterns}, _, exprs}) when length(patterns) > 0 do
-    rex_def({:def, :stack_effect}, {name, patterns, exprs}, __CALLER__)
+    rex_def({:def, :stack_effect}, {name, patterns, exprs})
   end
 
   defmacro drex({name, _, [expr]}) do

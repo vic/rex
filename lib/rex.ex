@@ -11,7 +11,7 @@ defmodule Rex do
   defmacro drex({{name, _, pattern}, _, expr}) when length(pattern) > 0 do
     quote do
       def unquote(name)([unquote_splicing(pattern) | stack]) do
-        [unquote_splicing(expr) | stack]
+        stack |> Rex.compile(unquote(expr)).()
       end
     end
   end
@@ -38,13 +38,13 @@ defmodule Rex do
     end
   end
 
-  def compile(quoted) do
+  def compile(quoted, binding \\ [], opts \\ []) do
     {fun, _} =
       quoted
       |> Enum.reduce(fn a, b -> {:~>, [], [a, b]} end)
       |> piped
       |> fn rex -> quote(do: fn stack -> stack |> unquote(rex) end) end.()
-      |> Code.eval_quoted
+      |> Code.eval_quoted(binding, opts)
     fun
   end
 
@@ -82,7 +82,7 @@ defmodule Rex do
   defp piped({:unquote, _, x}) when is_atom(x) do
     quote do
       (fn [quoted | stack] when is_list(quoted) ->
-        compile(quoted).(stack)
+        Rex.compile(quoted).(stack)
       end).()
     end
   end
@@ -131,7 +131,7 @@ defmodule Rex do
 
   defp piped(x) do
     quote do
-      (fn stack when is_list(stack) -> [unquote(x) | stack] end).()
+      fn stack when is_list(stack) -> [unquote(x) | stack] end.()
     end
   end
 

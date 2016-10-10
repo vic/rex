@@ -5,6 +5,7 @@ defmodule Rex.Core do
       import Rex
       import Rex.Core
       import Rex.Stack
+      import Rex.Control
       import Rex.Math
     end
   end

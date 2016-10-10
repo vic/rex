@@ -107,7 +107,19 @@ defmodule Rex.ExamplesTest do
   end
 
   test "unquote executes a quoted program on top of stack with the rest of the stack" do
-    assert [5, 4] = [3, 4] |> rex(quote(2 ~> Kernel.+/2) ~> unquote)
+    assert [5, 4] = [2, 3, 4] |> rex(quote(Kernel.+/2) ~> unquote)
+  end
+
+  test "ifte selects if condition is true" do
+    assert [:wii] = [] |> rex(ifte <~ true <~ quote(:wii) <~ quote(:woo))
+  end
+
+  test "ifte selects if condition is non-true" do
+    assert [:woo] = [] |> rex(ifte <~ nil <~ quote(:wii) <~ quote(:woo))
+  end
+
+  test "ifte executes with remainding of stack when true" do
+    assert [15] = [3, 15] |> rex(ifte <~ true <~ quote(mult) <~ quote(:nop))
   end
 
 

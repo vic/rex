@@ -14,5 +14,4 @@ defmodule Rex.Control do
   drex ifte(true, then_expr, _) ({:unquote, [], nil}, then_expr)
   drex ifte(_, _, else_expr) ({:unquote, [], nil}, else_expr)
 
-
 end

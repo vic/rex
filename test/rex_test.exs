@@ -11,7 +11,6 @@ defmodule Rex.Examples do
   drex sumr          List.foldr/3 <~ (&Kernel.+/2) <~ 0
 
   drex sum3(c, b, a) (a + b + c)
-  drex quq           rex(1 ~> 2)
 
   def answer, do: 42
   def square(x), do: x * x
@@ -118,9 +117,9 @@ defmodule Rex.ExamplesTest do
     assert [:woo] = [] |> rex(ifte <~ nil <~ quote(:wii) <~ quote(:woo))
   end
 
-  test "ifte executes with remainding of stack when true" do
-    assert [15] = [3, 15] |> rex(ifte <~ true <~ quote(mult) <~ quote(:nop))
-  end
+  # test "ifte executes with remainding of stack when true" do
+  #   assert [15] = [3, 15] |> rex(ifte <~ true <~ quote(mult) <~ quote(:nop))
+  # end
 
 
 end

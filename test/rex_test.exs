@@ -117,9 +117,21 @@ defmodule Rex.ExamplesTest do
     assert [:woo] = [] |> rex(ifte <~ nil <~ quote(:wii) <~ quote(:woo))
   end
 
-  # test "ifte executes with remainding of stack when true" do
-  #   assert [15] = [3, 15] |> rex(ifte <~ true <~ quote(mult) <~ quote(:nop))
-  # end
+  test "ifte executes with remainding of stack when true" do
+    assert [12, 15] = [4, 3, 15] |> rex(ifte <~ true <~ quote(Kernel.*/2) <~ quote(:nop))
+  end
+
+  test "unquote can execute a function by binding" do
+    assert [12] = [3] |> rex(quote(4 ~> mult) ~> unquote)
+  end
+
+  test "ifte can execute a remote rex function" do
+    assert [12] = [] |> rex(ifte <~ true <~ quote(Rex.Examples.mult <~ 3 <~ 4) <~ quote(:noop))
+  end
+
+  test "ifte can execute a function by binding" do
+    assert [12] = [4] |> rex(ifte <~ true <~ quote(mult <~ 3) <~ quote(:noop))
+  end
 
 
 end

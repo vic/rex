@@ -2,29 +2,30 @@ defmodule Rex.Core do
 
   @moduledoc false
 
-  def rex_def({:def, :stack_effect}, {name, patterns, exprs}, env) do
-    qenv = Macro.escape(env)
+  def rex_def({:def, :stack_effect}, {name, patterns, exprs}, _env) do
     quote do
       def unquote(name)([unquote_splicing(patterns) | stack]) do
-        [unquote_splicing(exprs) | stack] |> Rex.Core.expand_head(unquote(qenv))
+        [unquote_splicing(exprs) | stack]
       end
     end
   end
 
   def rex_def({:def, :stack_expr}, {name, expr}, env) do
     exprs = unroll_expr(expr)
+    qenv = Macro.escape(env)
     quote do
       def unquote(name)(stack) when is_list(stack) do
-        stack |> unquote(exprs_fn(exprs, env)).()
+        stack |> unquote(exprs_fn(exprs, env)).() |> Rex.Core.expand_head(unquote(qenv))
       end
     end
   end
 
   def rex_fn(expr, env) do
     exprs = unroll_expr(expr)
+    qenv = Macro.escape(env)
     quote do
       fn stack when is_list(stack) ->
-        stack |> unquote(exprs_fn(exprs, env)).()
+        stack |> unquote(exprs_fn(exprs, env)).() |> Rex.Core.expand_head(unquote(qenv))
       end
     end
   end
@@ -39,7 +40,7 @@ defmodule Rex.Core do
 
   def unquote_fn(quoted, env) do
     code = exprs_fn(quoted, env)
-    {fun, _} = Code.eval_quoted(code, [], env: env)
+    {fun, _} = Code.eval_quoted(code, [], env)
     fun
   end
 

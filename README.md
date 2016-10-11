@@ -7,8 +7,19 @@ Rex is a [concatenative language](http://concatenative.org) built with Elixir ma
 Being powered by Elixir macros means that Rex has no parser of its own as it just
 uses valid Elixir syntax and thus can be embedded on any elixir program.
 
+## Installation
 
-#### Stack based
+[Available in Hex](https://hex.pm/packages/rex), the package can be installed as:
+
+  1. Add `rex` to your list of dependencies in `mix.exs`:
+
+    ```elixir
+    def deps do
+      [{:rex, "~> 0.1.0"}]
+    end
+    ```
+
+## Stack based
 
 Rex is stack based, that is all Rex functions take a list and return another list.
 
@@ -39,7 +50,63 @@ iex> [4, 5] |> rex(3 ~> 2 ~> 1 ~> add ~> mul ~> swap)
 
 More examples available as [tests](https://github.com/vic/rex/blob/master/test/rex_test.exs)
 
+## Words
 
+In concatenative languages, functions are refered to as *words*.
+
+Inside an Elixir module, once you have `include Rex`'d
+you can call `drex` to define a new _word_ that acts either as a
+*stack shuffler* or as an *operator on the stack*.
+
+To define a stack *shuffling* word, the syntax is:
+
+```elixir
+    # (example from `Rex.Stack.swap/1`)
+    drex swap(a, b)     (b, a)
+```
+
+
+To define a stack *operator* you use the `~>` or `<~` syntax:
+
+```elixir
+    # pushes 1 then 2 then performs adition
+    drex three        1 ~> 2 ~> Kernel.+/2
+
+    # pushes 2 then performs multiplication
+    # expecting a first value already on stack (ie. partial function)
+    drex double       Kernel.*/2 <~ 2
+```
+
+
+As *operators* are the most frequent types of words you will be creating,
+the following *concatenative* syntax is supported:
+
+```elixir
+    # This will multiply the second element on the stack
+    # and then print the final stack state to stdout.
+    drex double_second  swap double swap show
+```
+
+However, if you want to also push an integer or any other Elixir literal,
+trying something like `3 double` wont work because its not valid Elixir syntax.
+But you can use the `do` notation for `drex`:
+
+
+```elixir
+      drex sixsix do
+        3
+        double dup Kernel.*/2
+      end
+```
+
+is exactly the same as:
+
+```elixir
+      drex sixsix  3 ~> double ~> dup ~> Kernel.*/2
+```
+
+The `do` form is peferred for large words. Most likely you'll just want to
+keep them short as concatenative programs are very composable.
 
 #### [Pointless programming](https://en.wikipedia.org/wiki/Tacit_programming)
 
@@ -50,16 +117,4 @@ drex sumr     List.foldr/3 <~ (&Kernel.+/2) <~ 0
 
 assert [6] == sumr([1, 2, 3])
 ```
-
-## Installation
-
-[Available in Hex](https://hex.pm/packages/rex), the package can be installed as:
-
-  1. Add `rex` to your list of dependencies in `mix.exs`:
-
-    ```elixir
-    def deps do
-      [{:rex, "~> 0.1.0"}]
-    end
-    ```
 

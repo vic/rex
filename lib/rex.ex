@@ -14,16 +14,48 @@ defmodule Rex do
   @doc ~S"""
   Define a new Rex function.
 
-  You can call `drex` in two ways, the first is
-  to define a new _word_ that *operates on the stack*,
-  here for example `double` is a partial application multiplying by two:
+  You can call `drex` to define a new _word_ that acts either as a
+  *stack shuffler* or as *operator on the stack*.
 
-      drex double         2 ~> Kernel.*/2
+  To define a stack *shuffling* word, the syntax is:
 
-  The second way is to define a _word_ for *stack shuffling*,
-  ie, for example `Rex.Stack.swap/1` is defined like:
-
+      # (example from `Rex.Stack.swap/1`)
       drex swap(a, b)     (b, a)
+
+
+  To define a stack *operator* you use the `~>` or `<~` syntax:
+
+      # pushes 1 then 2 then performs adition
+      drex three        1 ~> 2 ~> Kernel.+/2
+
+      # pushes 2 then performs multiplication
+      # expecting a first value already on stack (ie. partial function)
+      drex double       Kernel.*/2 <~ 2
+
+
+  As *operators* are the most frequent types of words you will be creating,
+  the following *concatenative* syntax is supported:
+
+      # This will multiply the second element on the stack
+      # and then print the final stack state to stdout.
+      drex double_second  swap double swap show
+
+  However, if you want to also push an integer or any other Elixir literal,
+  trying something like `3 double` wont work because its not valid Elixir syntax.
+  But you can use the `do` notation for `drex`:
+
+
+       drex thirtysix do
+         3
+         double dup Kernel.*/2
+       end
+
+  is exactly the same as:
+
+       drex thirtysix  3 ~> double ~> dup ~> Kernel.*/2
+
+  The `do` form is peferred for large words. Most likely you'll just want to
+  keep them short as concatenative programs are very composable.
 
   """
   defmacro drex({{name, _, patterns}, _, exprs}) when length(patterns) > 0 do

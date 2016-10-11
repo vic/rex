@@ -111,43 +111,47 @@ defmodule Rex.Core do
     end
   end
 
-  defp unroll_expr(expr = [do: _]) do
-    unroll_do(expr)
+  @operators [:quote, :unquote, :. , :/, :&, :~>, :<~]
+  defmacrop is_operator(x) do
+    (for o <- @operators, do: quote(do: unquote(x) == unquote(o)))
+    |> Enum.reduce(fn a, b -> quote(do: unquote(a) or unquote(b)) end)
   end
 
-  defp unroll_expr({:~>, _, [a, b]}) do
-    unroll_expr(b) ++ unroll_expr(a)
+  defp unroll_expr([do: {:__block__, _, lines}]) do
+    lines
+    |> Enum.map(fn line -> unroll_expr(do: line) end)
+    |> Enum.reduce(&Kernel.++/2)
   end
 
-  defp unroll_expr({:<~, _, [a, b]}) do
-    unroll_expr(a) ++ unroll_expr(b)
+  defp unroll_expr([do: line]) do
+    line |> unroll_line |> Enum.reverse
   end
 
   defp unroll_expr(expr) do
+    unroll_expr(do: expr)
+  end
+
+  defp unroll_line({:~>, _, [a, b]}) do
+    unroll_line(a) ++ unroll_line(b)
+  end
+
+  defp unroll_line({:<~, _, [a, b]}) do
+    unroll_line(b) ++ unroll_line(a)
+  end
+
+  defp unroll_line({name, loc, args}) when not is_operator(name) and length(args) > 0 do
+    (for a <- args, do: unroll_line(a))
+    |> Enum.reduce(&Kernel.++/2)
+    |> List.insert_at(0, {name, loc, nil})
+  end
+
+  defp unroll_line(expr) do
     [expr]
   end
 
-  defp unroll_do([do: line]) do
-    unroll_do({:line, line}) |> List.flatten |> Enum.reverse
-  end
-
-  defp unroll_do([do: {:__block__, _, lines}]) do
-    Enum.map(lines, fn line -> unroll_do({:line, line}) end)
-    |> List.flatten
-    |> Enum.reverse
-  end
-
-  defp unroll_do({:line, expr = {name, _, _}})
-  when (name == :/ or name == :&) do
-    unroll_expr(expr)
-  end
-
-  defp unroll_do({:line, {name, loc, args}}) when length(args) > 0 do
-    [{name, loc, []} | (for a <- args, do: unroll_do({:line, a}))]
-  end
-
-  defp unroll_do({:line, expr}) do
-    unroll_expr(expr)
-  end
+  # def show(quoted) do
+  #   IO.puts Macro.to_string(quoted)
+  #   quoted
+  # end
 
 end

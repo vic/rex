@@ -2,7 +2,7 @@ defmodule Rex.Examples do
   use Rex
 
   drex double(a)     (a * 2)
-  drex double_swap   double ~> swap ~> double
+  drex double_swap   double swap double
   drex mult          Kernel.*/2
   drex triple        3 ~> mult
   drex puts          IO.puts/1 ~> drop
@@ -15,9 +15,16 @@ defmodule Rex.Examples do
   def answer, do: 42
   def square(x), do: x * x
 
+  # triple ~> show ~> swap ~> double
   drex tatata do
     triple show
     swap double
+  end
+  # [double, swap, show, triple]
+
+  quote do
+    a b c d # a(b(c(d))) => [a, b, c, d]
+    e f
   end
 
 end
@@ -27,7 +34,9 @@ defmodule Rex.ExamplesTest do
   import ExUnit.CaptureIO
 
   use Rex
+
   doctest Rex
+  doctest Rex.ReadmeExamples
 
   import Rex.Examples
 

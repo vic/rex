@@ -46,6 +46,7 @@ defmodule Rex.Stack do
   """
   def show(stack) do
     IO.inspect stack
+    stack
   end
 
 end

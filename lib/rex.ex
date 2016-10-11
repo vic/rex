@@ -59,15 +59,15 @@ defmodule Rex do
 
   """
   defmacro drex({{name, _, patterns}, _, exprs}) when length(patterns) > 0 do
-    rex_def({:def, :stack_effect}, {name, patterns, exprs})
+    rex_def({:def, :shuffler}, {name, patterns, exprs})
   end
 
   defmacro drex({name, _, [expr]}) do
-    rex_def({:def, :stack_expr}, {name, expr}, __CALLER__)
+    rex_def({:def, :operator}, {name, nil, expr}, __CALLER__)
   end
 
-  defmacro drex({name, _, nil}, expr = [do: _]) do
-    rex_def({:def, :stack_expr}, {name, expr}, __CALLER__)
+  defmacro drex({name, _, args}, expr = [do: _]) do
+    rex_def({:def, :operator}, {name, args, expr}, __CALLER__)
   end
 
   @doc """

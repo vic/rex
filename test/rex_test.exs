@@ -15,16 +15,16 @@ defmodule Rex.Examples do
   def answer, do: 42
   def square(x), do: x * x
 
-  # triple ~> show ~> swap ~> double
   drex tatata do
     triple show
     swap double
   end
-  # [double, swap, show, triple]
 
-  quote do
-    a b c d # a(b(c(d))) => [a, b, c, d]
-    e f
+  drex caca(a, _, c) do
+    ^c
+    ^a
+    ^c
+    ^a
   end
 
 end
@@ -165,6 +165,10 @@ defmodule Rex.ExamplesTest do
       assert [10, 12] == [4, 5] |> rex(tatata)
     end
     assert capture_io(fun) == "[12, 5]\n"
+  end
+
+  test "defined caca word replaces arguments from stack" do
+    assert [1, 3, 1, 3, 1, 2, 3] = [1, 2, 3] |> rex(caca)
   end
 
 

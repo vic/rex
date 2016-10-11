@@ -2,7 +2,7 @@ defmodule Rex.Core do
 
   @moduledoc false
 
-  def rex_def({:def, :stack_effect}, {name, patterns, exprs}) do
+  def rex_def({:def, :shuffler}, {name, patterns, exprs}) do
     quote do
       def unquote(name)([unquote_splicing(patterns) | stack]) do
         [unquote_splicing(exprs) | stack]
@@ -10,7 +10,17 @@ defmodule Rex.Core do
     end
   end
 
-  def rex_def({:def, :stack_expr}, {name, expr}, env) do
+  def rex_def({:def, :operator}, {name, args, expr}, env) when length(args) > 0 do
+    exprs = unroll_expr(expr)
+    qenv = Macro.escape(env)
+    quote do
+      def unquote(name)(stack = [unquote_splicing(args) | _rest]) do
+        stack |> unquote(exprs_fn(exprs)).() |> Rex.Core.expand_head(unquote(qenv))
+      end
+    end
+  end
+
+  def rex_def({:def, :operator}, {name, _, expr}, env) do
     exprs = unroll_expr(expr)
     qenv = Macro.escape(env)
     quote do
@@ -99,6 +109,14 @@ defmodule Rex.Core do
     end
   end
 
+  # explicit push value reference
+  defp piped_expr( x = {:^, _, [value]}) do
+    IO.inspect x
+    quote do
+      fn stack when is_list(stack) -> [unquote(value) | stack] end.()
+    end
+  end
+
   # any other expr
   defp piped_expr(expr = {_, _, x}) when is_atom(x) or x == [] do
     expr
@@ -111,7 +129,7 @@ defmodule Rex.Core do
     end
   end
 
-  @operators [:quote, :unquote, :. , :/, :&, :~>, :<~]
+  @operators [:quote, :unquote, :/, :&, :~>, :<~]
   defmacrop is_operator(x) do
     (for o <- @operators, do: quote(do: unquote(x) == unquote(o)))
     |> Enum.reduce(fn a, b -> quote(do: unquote(a) or unquote(b)) end)
@@ -139,6 +157,12 @@ defmodule Rex.Core do
     unroll_line(b) ++ unroll_line(a)
   end
 
+  defp unroll_line({:^, _, args}) when length(args) > 0 do
+    (for a <- args, do: unroll_line(a))
+    |> Enum.reduce(&Kernel.++/2)
+    |> Enum.map(fn x -> {:^, [], [x]} end)
+  end
+
   defp unroll_line({name, loc, args}) when not is_operator(name) and length(args) > 0 do
     (for a <- args, do: unroll_line(a))
     |> Enum.reduce(&Kernel.++/2)
@@ -149,9 +173,9 @@ defmodule Rex.Core do
     [expr]
   end
 
-  # def show(quoted) do
-  #   IO.puts Macro.to_string(quoted)
-  #   quoted
-  # end
+  def show(quoted) do
+    IO.puts Macro.to_string(quoted)
+    quoted
+  end
 
 end

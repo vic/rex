@@ -30,10 +30,6 @@ defmodule Rex.Examples do
     ^c ^a
   end
 
-  drex baba(a, b) do
-    ^b a ^b a
-  end
-
 end
 
 defmodule Rex.ExamplesTest do
@@ -178,10 +174,12 @@ defmodule Rex.ExamplesTest do
     assert [1, 3, 1, 3, 1, 2, 3] = [1, 2, 3] |> rex(caca)
   end
 
-  test "word with ref to given stack operators" do
-    inspector = fn [x | rest] -> [inspect(x) | rest] end
-    assert ["22", "22", 22, 22] == [inspector, 22] |> rex(baba)
+  test "app calls a function with values from stack" do
+    assert ["22"] == [&Kernel.inspect/1, 22] |> rex(app)
   end
 
+  test "app doesnt calls if not enough values on stack" do
+    assert [&Kernel.inspect/1] == [&Kernel.inspect/1] |> rex(app)
+  end
 
 end

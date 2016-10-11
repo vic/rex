@@ -49,4 +49,21 @@ defmodule Rex.Stack do
     stack
   end
 
+
+  def app([func | stack]) when is_function(func) do
+    {:arity, arity} = :erlang.fun_info(func, :arity)
+    cond do
+      arity == 0 ->
+        [func.() | stack]
+
+      length(stack) >= arity ->
+        args = Enum.slice(stack, 0..arity-1)
+        rest = Enum.slice(stack, arity..-1)
+        [apply(func, args) | rest]
+
+      :else ->
+        [func | stack]
+    end
+  end
+
 end

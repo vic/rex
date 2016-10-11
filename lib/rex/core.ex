@@ -3,7 +3,7 @@ defmodule Rex.Core do
   @moduledoc false
 
   def rex_def({:def, :shuffler}, {name, patterns, exprs}) do
-    quote do
+    quote context: Rex.Code do
       def unquote(name)([unquote_splicing(patterns) | stack]) do
         [unquote_splicing(exprs) | stack]
       end
@@ -13,9 +13,9 @@ defmodule Rex.Core do
   def rex_def({:def, :operator}, {name, args, expr}, env) when length(args) > 0 do
     exprs = unroll_expr(expr)
     qenv = Macro.escape(env)
-    quote do
+    quote context: Rex.Code do
       def unquote(name)(stack = [unquote_splicing(args) | _rest]) do
-        stack |> unquote(exprs_fn(exprs)).() |> Rex.Core.expand_head(unquote(qenv))
+        stack |> unquote(exprs_pipe(exprs)) |> Rex.Core.expand_head(unquote(qenv))
       end
     end
   end
@@ -23,9 +23,9 @@ defmodule Rex.Core do
   def rex_def({:def, :operator}, {name, _, expr}, env) do
     exprs = unroll_expr(expr)
     qenv = Macro.escape(env)
-    quote do
+    quote context: Rex.Code do
       def unquote(name)(stack) when is_list(stack) do
-        stack |> unquote(exprs_fn(exprs)).() |> Rex.Core.expand_head(unquote(qenv))
+        stack |> unquote(exprs_pipe(exprs)) |> Rex.Core.expand_head(unquote(qenv))
       end
     end
   end
@@ -33,9 +33,9 @@ defmodule Rex.Core do
   def rex_fn(expr, env) do
     exprs = unroll_expr(expr)
     qenv = Macro.escape(env)
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) ->
-        stack |> unquote(exprs_fn(exprs)).() |> Rex.Core.expand_head(unquote(qenv))
+        stack |> unquote(exprs_pipe(exprs)) |> Rex.Core.expand_head(unquote(qenv))
       end
     end
   end
@@ -49,35 +49,33 @@ defmodule Rex.Core do
   end
 
   def unquote_fn(quoted, env) do
-    code = exprs_fn(quoted)
+    code = exprs_pipe(quoted)
+    code = quote(context: Rex.Code, do: fn stack -> stack |> unquote(code) end)
     {fun, _} = Code.eval_quoted(code, [], env)
     fun
   end
 
-  defp exprs_fn(exprs) do
+  defp exprs_pipe(exprs) do
     funs = for expr <- exprs, do: piped_expr(expr)
-    pipe = Enum.reduce(funs, &({:|>, [], [&1, &2]}))
-    quote do
-      fn stack when is_list(stack) -> stack |> unquote(pipe) end
-    end
+    Enum.reduce(funs, &({:|>, [], [&1, &2]}))
   end
 
   defp piped_expr({:quote, _, [expr]}) do
     exprs = unroll_expr(expr) |> Macro.escape
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [unquote(exprs) | stack] end.()
     end
   end
 
   defp piped_expr({:unquote, _, _}) do
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [{:unquote, [], nil} | stack] end.()
     end
   end
 
   # remote fun ref with arity = 0
   defp piped_expr({:/, _, [{ref, _, []}, 0]}) do
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [unquote(ref)() | stack] end.()
     end
   end
@@ -85,7 +83,7 @@ defmodule Rex.Core do
   # remote fun ref with arity > 0
   defp piped_expr({:/, _, [{ref, _, []}, arity]}) when arity > 0 do
     vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
-    quote do
+    quote context: Rex.Code do
       fn [unquote_splicing(Enum.reverse(vars)) | stack] ->
         [unquote(ref)(unquote_splicing(vars)) | stack]
       end.()
@@ -94,7 +92,7 @@ defmodule Rex.Core do
 
   # local fun ref with arity = 0
   defp piped_expr({:/, _, [ref = {a, _, b}, 0]}) when is_atom(a) and is_atom(b) do
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [unquote(ref) | stack] end.()
     end
   end
@@ -102,17 +100,16 @@ defmodule Rex.Core do
   # local fun ref with arity > 0
   defp piped_expr({:/, _, [{ref, _, b}, arity]}) when is_atom(ref) and is_atom(b) and arity > 0 do
     vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
-    quote do
+    quote context: Rex.Code do
       fn [unquote_splicing(Enum.reverse(vars)) | stack] ->
         [unquote(ref)(unquote_splicing(vars)) | stack]
       end.()
     end
   end
 
-  # explicit push value reference
-  defp piped_expr( x = {:^, _, [value]}) do
-    IO.inspect x
-    quote do
+  # push expr reference
+  defp piped_expr({:^, _, [value]}) do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [unquote(value) | stack] end.()
     end
   end
@@ -124,15 +121,15 @@ defmodule Rex.Core do
 
   # any other expr
   defp piped_expr(expr) do
-    quote do
+    quote context: Rex.Code do
       fn stack when is_list(stack) -> [unquote(expr) | stack] end.()
     end
   end
 
   @operators [:quote, :unquote, :/, :&, :~>, :<~]
   defmacrop is_operator(x) do
-    (for o <- @operators, do: quote(do: unquote(x) == unquote(o)))
-    |> Enum.reduce(fn a, b -> quote(do: unquote(a) or unquote(b)) end)
+    (for o <- @operators, do: quote(context: Rex.Code, do: unquote(x) == unquote(o)))
+    |> Enum.reduce(fn a, b -> quote(context: Rex.Code, do: unquote(a) or unquote(b)) end)
   end
 
   defp unroll_expr([do: {:__block__, _, lines}]) do
@@ -157,10 +154,14 @@ defmodule Rex.Core do
     unroll_line(b) ++ unroll_line(a)
   end
 
-  defp unroll_line({:^, _, args}) when length(args) > 0 do
-    (for a <- args, do: unroll_line(a))
+  defp unroll_line({:^, _, [ref = {_, _, nil}]}) do
+    [{:^, [], [ref]}]
+  end
+
+  defp unroll_line({:^, _, [{name, _, more}]}) when is_list(more) do
+    (for a <- more, do: unroll_line(a))
     |> Enum.reduce(&Kernel.++/2)
-    |> Enum.map(fn x -> {:^, [], [x]} end)
+    |> List.insert_at(0, {:^, [], [{name, [], nil}]})
   end
 
   defp unroll_line({name, loc, args}) when not is_operator(name) and length(args) > 0 do

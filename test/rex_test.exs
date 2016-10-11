@@ -20,11 +20,18 @@ defmodule Rex.Examples do
     swap double
   end
 
+  def a(stack) do
+    stack
+  end
+
   drex caca(a, _, c) do
     ^c
     ^a
-    ^c
-    ^a
+    ^c ^a
+  end
+
+  drex baba(a, b) do
+    ^b a ^b a
   end
 
 end
@@ -167,8 +174,13 @@ defmodule Rex.ExamplesTest do
     assert capture_io(fun) == "[12, 5]\n"
   end
 
-  test "defined caca word replaces arguments from stack" do
+  test "word with value reference takes values from stack" do
     assert [1, 3, 1, 3, 1, 2, 3] = [1, 2, 3] |> rex(caca)
+  end
+
+  test "word with ref to given stack operators" do
+    inspector = fn [x | rest] -> [inspect(x) | rest] end
+    assert ["22", "22", 22, 22] == [inspector, 22] |> rex(baba)
   end
 
 

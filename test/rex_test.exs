@@ -1,3 +1,4 @@
+quote do
 defmodule Rex.Examples do
   use Rex
 
@@ -181,5 +182,7 @@ defmodule Rex.ExamplesTest do
   test "app doesnt calls if not enough values on stack" do
     assert [&Kernel.inspect/1] == [&Kernel.inspect/1] |> rex(app)
   end
+
+end
 
 end

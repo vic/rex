@@ -13,13 +13,27 @@ defmodule Rex.Macro do
   `{data_stack, program_stack, env}`
   """
 
+
+  @left_right_ops [:+, :-, :*, :/, :<, :>]
+
+  @doc false
+  defmacrop is_left_right_op(x) do
+    @left_right_ops
+    |> Enum.map(fn o -> quote(do: unquote(x) == unquote(o)) end)
+    |> Enum.reduce(fn a, b -> quote(do: unquote(a) or unquote(b)) end)
+  end
+
   @doc ~S"""
   Turns Elixir code into a Rex program stack.
   """
-  defmacro to_rex(elixir_expr) do
-    elixir_expr |> to_rex_ast |> Enum.map(&fun_expr/1)
+  defmacro to_rex(elixir_ast) do
+    elixir_ast |> to_rex_program
   end
 
+  @doc false
+  def to_rex_program(elixir_ast) do
+    elixir_ast |> to_rex_ast |> Enum.map(&fun_expr/1)
+  end
 
   @doc ~S"""
   Transforms an Elixir AST into a Rex AST
@@ -30,12 +44,13 @@ defmodule Rex.Macro do
 
   defp unroll_expr([do: {:__block__, _, lines}]) do
     lines
-    |> Stream.map(fn line -> unroll_expr(do: line) end)
+    |> Stream.map(fn line -> unroll_expr(do: line) |> Enum.reverse end)
     |> Enum.reduce(&Kernel.++/2)
+    |> Enum.reverse
   end
 
   defp unroll_expr([do: line]) do
-    line |> unroll_line |> Enum.reverse
+    line |> unroll_line
   end
 
   defp unroll_expr(expr) do
@@ -68,11 +83,15 @@ defmodule Rex.Macro do
     [ref]
   end
 
-  defp unroll_line(ref = {:/, _, [{{:., _, [{:__aliases__, _, [module]}, name]}, _, _}, arity]}) when is_atom(module) and is_atom(name) and is_integer(arity) do
+  defp unroll_line(ref = {:/, _, [{{:., _, [_, name]}, _, _}, arity]}) when is_atom(name) and is_integer(arity) do
     [ref]
   end
 
-  defp unroll_line({name, loc, args}) when name != :quote and length(args) > 0 do
+  defp unroll_line({op, _, [a, b]}) when is_left_right_op(op) do
+    unroll_line(a) ++ unroll_line(b) ++ [{op, [], nil}]
+  end
+
+  defp unroll_line({name, loc, args}) when (name != :quote and name != :.) and length(args) > 0 do
     (for a <- args, do: unroll_line(a))
     |> Enum.reduce(&Kernel.++/2)
     |> List.insert_at(0, {name, loc, nil})
@@ -85,6 +104,12 @@ defmodule Rex.Macro do
   defp fun_expr({:^, _, [expr]}) do
     quote do
       fn {data, prog, env} -> {[unquote(expr) | data], prog, env} end
+    end
+  end
+
+  defp fun_expr({ref = {:., _, [{_, _, _}, name]}, _, []}) when is_atom(name) do
+    quote do
+      fn state -> state |> unquote(ref)() end
     end
   end
 
@@ -118,9 +143,31 @@ defmodule Rex.Macro do
   defp fun_expr({:/, _, [{ref, _, []}, arity]}) do
     vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
     quote do
-      fn {[unquote_splicing(Enum.reverse(vars)) | stack], program, env} ->
-        {[unquote(ref)(unquote_splicing(vars)) | stack], program, env}
+      fn {[unquote_splicing(Enum.reverse(vars)) | stack], prog, env} ->
+        {[unquote(ref)(unquote_splicing(vars)) | stack], prog, env}
       end
+    end
+  end
+
+  defp fun_expr({:dequote, _, _}) do
+    quote unquote: false do
+      fn {[quoted | data], prog, env} ->
+        fun = Rex.Core.rex_fn(quoted) |> Rex.Macro.eval_at_env(env)
+        {data, prog, env} |> fun.()
+      end
+    end
+  end
+
+  defp fun_expr(expr = {:quote, _, [[do: _]]}) do
+    quote do
+      fn {data, prog, env} -> {[unquote(expr) | data], prog, env} end
+    end
+  end
+
+  defp fun_expr({:quote, _, [expr]}) do
+    code = expr |> Macro.escape
+    quote do
+      fn {data, prog, env} -> {[unquote(code) | data], prog, env} end
     end
   end
 
@@ -128,6 +175,25 @@ defmodule Rex.Macro do
     quote do
       fn {data, prog, env} -> {[unquote(expr) | data], prog, env} end
     end
+  end
+
+  @doc false
+  def eval_at_env(code, env) do
+    with {val, _} <- Code.eval_quoted(code, [], env), do: val
+  end
+
+  @doc false
+  def show_code(expr) do
+    IO.puts Macro.to_string(expr)
+    expr
+  end
+
+  @doc false
+  def dequote_fn(env) do
+    quote(do: dequote)
+    |> to_rex_program
+    |> eval_at_env(env)
+    |> fn [fun] -> fun end.()
   end
 
 end

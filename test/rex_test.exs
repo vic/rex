@@ -188,5 +188,9 @@ defmodule Rex.ExamplesTest do
     assert_raise FunctionClauseError, x
   end
 
+  test "can execute a function specifying its arity" do
+    assert [6] == [] |> rex_data([1, 2, 3] ~> (&Kernel.+/2) ~> Enum.reduce/2)
+  end
+
 end
 

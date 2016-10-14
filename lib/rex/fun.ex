@@ -19,13 +19,11 @@ defmodule Rex.Fun do
     end
   end
 
-  defmacro dequote do
-    quote do
-      fn {[{quoted, env} | stack], queue} ->
-        code = Rex.Core.rex_fn(quoted, env)
-        {fun, _} = Code.eval_quoted(code, [], env)
-        {stack, queue} |> fun.()
-      end
+  def dequote do
+    fn {[{quoted, env} | stack], queue} ->
+      code = Rex.Core.rex_fn(quoted, env)
+      {fun, _} = Code.eval_quoted(code, [], env)
+      {stack, queue} |> fun.()
     end
   end
 

@@ -13,15 +13,15 @@ defmodule Rex.CoreTest do
   alias  __MODULE__.Hello
 
   def done, do: "done"
-  def halt({data, _program}) do
-    {[done | data], []}
+  def halt({stack, _program}) do
+    {[done | stack], []}
   end
 
-  test "pushes a number literal from program stack into data stack" do
+  test "pushes a number literal from queue into stack" do
     assert {[1], []} == run_top({[], to_rex(1)})
   end
 
-  test "pushes a binary literal from program stack into data stack" do
+  test "pushes a binary literal from queue into stack" do
     assert {["hello"], []} == run_top({[], to_rex("hello")})
   end
 
@@ -49,7 +49,7 @@ defmodule Rex.CoreTest do
     assert {[3], []} == run_top({[1, 2], to_rex(Kernel.+/2)})
   end
 
-  test "pushes a function reference to the data stack" do
+  test "pushes a function reference to the stack" do
     assert {[&Kernel.+/2], []} == run_top({[], to_rex(&Kernel.+/2)})
   end
 

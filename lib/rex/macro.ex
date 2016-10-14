@@ -5,23 +5,24 @@ defmodule Rex.Macro do
 
   Rex is a concatenative language written in Elixir syntax.
 
-  A Rex AST is a list of Elixir terms in RPN (Reverse Polish Notation)
+  A Rex AST is a list of Elixir quoted terms in RPN (Reverse Polish Notation)
 
-  A Rex program stack is a list of functions in that same order,
-  each function takes and returns a tuple with the form:
+  A Rex function (a `word` in concatenative parlance) takes and returns a tuple
+  with the form: `{stack, queue}`.
 
-  `{data_stack, program_stack, env}`
+  The `stack` is a list of operands for remaining functions.
+  The `queue` is a list of future functions to be executed.
   """
 
   @doc ~S"""
   Turns Elixir code into a Rex program stack.
   """
   defmacro to_rex(elixir_ast) do
-    elixir_ast |> to_rex_program(__CALLER__)
+    elixir_ast |> to_rex_queue(__CALLER__)
   end
 
   @doc false
-  def to_rex_program(elixir_ast, env) do
+  def to_rex_queue(elixir_ast, env) do
     elixir_ast |> to_rex_ast |> Enum.map(&Rex.Fun.to_fun(&1, env))
   end
 

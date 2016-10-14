@@ -13,16 +13,16 @@ defmodule Rex.Control do
 
   require Rex.Fun
 
-  def ifte({[true, then_expr, _ | data], prog}) do
-    {[then_expr | data], prog} |> dequote
+  def ifte({[true, then_expr, _ | stack], queue}) do
+    {[then_expr | stack], queue} |> dequote
   end
 
-  def ifte({[_, _, else_expr | data], prog}) do
-    {[else_expr | data], prog} |> dequote
+  def ifte({[_, _, else_expr | stack], queue}) do
+    {[else_expr | stack], queue} |> dequote
   end
 
-  def dequote({data, prog}) do
-    {data, [Rex.Fun.dequote | prog]}
+  def dequote({stack, queue}) do
+    {stack, [Rex.Fun.dequote | queue]}
   end
 
 end

@@ -6,8 +6,8 @@ defmodule Rex.Stack do
 
   [a, b | s] -> [b | s]
   """
-  def drop({[_ | stack], prog}) do
-    {stack, prog}
+  def drop({[_ | stack], queue}) do
+    {stack, queue}
   end
 
   @doc ~S"""
@@ -44,25 +44,25 @@ defmodule Rex.Stack do
 
   [a, b | c] -> [a, b | c]
   """
-  def show({data, prog}) do
-    IO.inspect data
-    {data, prog}
+  def show({stack, queue}) do
+    IO.inspect stack
+    {stack, queue}
   end
 
 
-  def app({[func | data], prog}) when is_function(func) do
+  def app({[func | stack], queue}) when is_function(func) do
     {:arity, arity} = :erlang.fun_info(func, :arity)
-    app(func, arity, data, prog)
+    app(func, arity, stack, queue)
   end
 
-  defp app(func, 0, data, prog) do
-    {[func.() | data], prog}
+  defp app(func, 0, stack, queue) do
+    {[func.() | stack], queue}
   end
 
-  defp app(func, arity, data, prog) when length(data) >= arity do
-    args = Enum.slice(data, 0..arity-1)
-    rest = Enum.slice(data, arity..-1)
-    {[apply(func, args) | rest], prog}
+  defp app(func, arity, stack, queue) when length(stack) >= arity do
+    args = Enum.slice(stack, 0..arity-1)
+    rest = Enum.slice(stack, arity..-1)
+    {[apply(func, args) | rest], queue}
   end
 
 

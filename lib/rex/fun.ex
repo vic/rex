@@ -65,16 +65,17 @@ defmodule Rex.Fun do
     end
   end
 
-  defp fun_expr(expr = {:quote, _, [[do: _]]}) do
-    quote do
-      fn {data, prog, env} -> {[unquote(expr) | data], prog, env} end
-    end
-  end
-
-  defp fun_expr({:quote, _, [expr]}) do
+  defp fun_expr({:@, _, [[expr]]}) do
     code = expr |> Macro.escape
     quote do
       fn {data, prog, env} -> {[unquote(code) | data], prog, env} end
+    end
+  end
+
+  defp fun_expr(expr = {:quote, _, _}) do
+    code = expr |> Macro.escape
+    quote do
+      fn {data, prog, env} -> {[unquote(expr) | data], prog, env} end
     end
   end
 

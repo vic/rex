@@ -66,7 +66,7 @@ defmodule Rex.Postfix do
     postfix_line(a) ++ postfix_line(b) ++ [{op, [], nil}]
   end
 
-  defp postfix_line({name, loc, args}) when (name != :quote and name != :.) and length(args) > 0 do
+  defp postfix_line({name, loc, args}) when (name != :quote and name != :@) and length(args) > 0 do
     (for a <- args, do: postfix_line(a))
     |> Enum.reduce(&Kernel.++/2)
     |> List.insert_at(0, {name, loc, nil})

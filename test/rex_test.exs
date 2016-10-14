@@ -116,41 +116,41 @@ defmodule Rex.ExamplesTest do
     assert capture_io(fun) == "[5]\n"
   end
 
-  test "quote pushes a quoted expression without changing it into the stack" do
-    assert [{:~>, _, [{:~>, _, [1, 2]}, {:foo, _, nil}]}] = [] |> rex_data(quote(1 ~> 2 ~> foo))
+  test "quote pushes the elixir ast without changing it into the stack" do
+    assert [{:~>, _, [{:~>, _, [1, 2]}, {:foo, _, nil}]}] = [] |> rex_data(@[1 ~> 2 ~> foo])
   end
 
-  test "quote pushes a Rex program with <~ into the stack" do
-    assert [{:<~, _, [{:<~, _, [{:foo, _, nil}, 2]}, 1]}] = [] |> rex_data(quote(foo <~ 2 <~ 1))
+  test "quote pushes the elixir ast without touching it" do
+    assert [{:<~, _, [{:<~, _, [{:foo, _, nil}, 2]}, 1]}] = [] |> rex_data(@[foo <~ 2 <~ 1])
   end
 
   test "dequote executes a quoted program on top of stack with the rest of the stack" do
-    assert [5, 4] = [2, 3, 4] |> rex_data(quote(Kernel.+/2) ~> dequote)
+    assert [5, 4] = [2, 3, 4] |> rex_data(@[Kernel.+/2] ~> dequote)
   end
 
   test "ifte selects if condition is true" do
-    assert [:wii] = [] |> rex_data(ifte <~ true <~ quote(:wii) <~ quote(:woo))
+    assert [:wii] = [] |> rex_data(ifte <~ true <~ @[:wii] <~ @[:woo])
   end
 
   test "ifte selects if condition is non-true" do
-    assert [:woo] = [] |> rex_data(ifte <~ nil <~ quote(:wii) <~ quote(:woo))
+    assert [:woo] = [] |> rex_data(ifte <~ nil <~ @[:wii] <~ @[:woo])
   end
 
   test "ifte executes with remainding of stack when true" do
-    assert [12, 15] = [4, 3, 15] |> rex_data(ifte <~ true <~ quote(Kernel.*/2) <~ quote(:nop))
+    assert [12, 15] = [4, 3, 15] |> rex_data(ifte <~ true <~ @[Kernel.*/2] <~ @[:nop])
   end
 
   test "dequote can execute a function by binding" do
-    assert [12] = [3] |> rex_data(quote(4 ~> mult) ~> dequote)
+    assert [12] = [3] |> rex_data(@[4 ~> mult] ~> dequote)
   end
 
   test "ifte can execute a remote rex function" do
     require Rex.Macro
-    assert [12] = [] |> rex_data(ifte <~ true <~ quote(Rex.Examples.mult <~ 3 <~ 4) <~ quote(:noop))
+    assert [12] = [] |> rex_data(ifte <~ true <~ @[Rex.Examples.mult <~ 3 <~ 4] <~ @[:noop])
   end
 
   test "ifte can execute a function by binding" do
-    assert [12] = [4] |> rex_data(ifte <~ true <~ quote(mult <~ 3) <~ quote(:noop))
+    assert [12] = [4] |> rex_data(ifte <~ true <~ @[mult <~ 3] <~ [:noop])
   end
 
   test "rex can take a do with a line" do
@@ -190,6 +190,10 @@ defmodule Rex.ExamplesTest do
 
   test "can execute a function specifying its arity" do
     assert [6] == [] |> rex_data([1, 2, 3] ~> (&Kernel.+/2) ~> Enum.reduce/2)
+  end
+
+  test "calling Elixir quote doesnt modify the ast" do
+    assert [{:+, _, [1, 2]}] = [] |> rex_data(quote(do: 1 + 2))
   end
 
 end

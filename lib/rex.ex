@@ -15,22 +15,22 @@ defmodule Rex do
   Define a new Rex function.
   """
   defmacro drex({{name, _, patterns}, _, exprs}) when length(patterns) > 0 do
-    rex_def({:def, :shuffler}, {name, patterns, exprs})
+    rex_def({:def, :shuffler}, {name, patterns, exprs}, __CALLER__)
   end
 
   defmacro drex({name, _, [expr]}) do
-    rex_def({:def, :operator}, {name, nil, expr})
+    rex_def({:def, :operator}, {name, nil, expr}, __CALLER__)
   end
 
   defmacro drex({name, _, args}, expr = [do: _]) do
-    rex_def({:def, :operator}, {name, args, expr})
+    rex_def({:def, :operator}, {name, args, expr}, __CALLER__)
   end
 
   @doc """
   Compile a Rex expression into an Elixir function.
   """
   defmacro rex(expr) do
-    rex_fn(expr)
+    rex_fn(expr, __CALLER__)
   end
 
   @doc ~S"""
@@ -38,7 +38,7 @@ defmodule Rex do
   """
   defmacro rex(stack, expr) do
     quote do
-      unquote(stack) |> unquote(rex_fn(expr)).()
+      unquote(stack) |> unquote(rex_fn(expr, __CALLER__)).()
     end
   end
 

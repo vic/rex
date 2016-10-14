@@ -17,12 +17,12 @@ defmodule Rex.Macro do
   Turns Elixir code into a Rex program stack.
   """
   defmacro to_rex(elixir_ast) do
-    elixir_ast |> to_rex_program
+    elixir_ast |> to_rex_program(__CALLER__)
   end
 
   @doc false
-  def to_rex_program(elixir_ast) do
-    elixir_ast |> to_rex_ast |> Enum.map(&Rex.Fun.to_fun/1)
+  def to_rex_program(elixir_ast, env \\ nil) do
+    elixir_ast |> to_rex_ast |> Enum.map(&Rex.Fun.to_fun(&1, env))
   end
 
   @doc ~S"""
@@ -33,22 +33,9 @@ defmodule Rex.Macro do
   end
 
   @doc false
-  def eval_at_env(code, env) do
-    with {val, _} <- Code.eval_quoted(code, [], env), do: val
-  end
-
-  @doc false
   def show_code(expr) do
     IO.puts Macro.to_string(expr)
     expr
-  end
-
-  @doc false
-  def dequote_fn(env) do
-    quote(do: dequote)
-    |> to_rex_program
-    |> eval_at_env(env)
-    |> fn [fun] -> fun end.()
   end
 
 end

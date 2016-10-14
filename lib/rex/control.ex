@@ -10,19 +10,19 @@ defmodule Rex.Control do
       [nil,  [x], [y] | s] -> [y | s]
 
   """
-  #drex ifte(true, then_expr, _) ({:dequote, [], nil}, then_expr)
-  #drex ifte(_, _, else_expr) ({:dequote, [], nil}, else_expr)
 
-  def ifte({[true, then_expr, _ | data], prog, env}) do
-    {[then_expr | data], [Rex.Macro.dequote_fn(env) | prog], env}
+  require Rex.Fun
+
+  def ifte({[true, then_expr, _ | data], prog}) do
+    {[then_expr | data], prog} |> dequote
   end
 
-  def ifte({[_, _, else_expr | data], prog, env}) do
-    {[else_expr | data], [Rex.Macro.dequote_fn(env) | prog], env}
+  def ifte({[_, _, else_expr | data], prog}) do
+    {[else_expr | data], prog} |> dequote
   end
 
-  def dequote({data, prog, env}) do
-    {data, [Rex.Macro.dequote_fn(env) | prog], env}
+  def dequote({data, prog}) do
+    {data, [Rex.Fun.dequote | prog]}
   end
 
 end

@@ -42,9 +42,8 @@ defmodule Rex.ExamplesTest do
   import Rex.Examples
 
   defmacrop rex_data(data, expr) do
-    qenv = __CALLER__ |> Macro.escape
     quote do
-      {data, _, _} = {unquote(data), [], unquote(qenv)} |> unquote(Rex.Core.rex_fn(expr)).()
+      {data, _} = {unquote(data), []} |> unquote(Rex.Core.rex_fn(expr, __CALLER__)).()
       data
     end
   end
@@ -117,11 +116,12 @@ defmodule Rex.ExamplesTest do
   end
 
   test "quote pushes the elixir ast without changing it into the stack" do
-    assert [{:~>, _, [{:~>, _, [1, 2]}, {:foo, _, nil}]}] = [] |> rex_data(@[1 ~> 2 ~> foo])
+    assert [{{:~>, _, [{:~>, _, [1, 2]}, {:foo, _, nil}]}, _env}] = [] |> rex_data(@[1 ~> 2 ~> foo])
   end
 
-  test "quote pushes the elixir ast without touching it" do
-    assert [{:<~, _, [{:<~, _, [{:foo, _, nil}, 2]}, 1]}] = [] |> rex_data(@[foo <~ 2 <~ 1])
+  test "quote pushes the definition environment alongide the quoted code" do
+    assert [{code, env}] = [] |> rex_data(@[1 + 2])
+    assert {3, _} = Code.eval_quoted(code, [], env)
   end
 
   test "dequote executes a quoted program on top of stack with the rest of the stack" do
@@ -193,7 +193,7 @@ defmodule Rex.ExamplesTest do
   end
 
   test "calling Elixir quote doesnt modify the ast" do
-    assert [{:+, _, [1, 2]}] = [] |> rex_data(quote(do: 1 + 2))
+    assert [{:quote, _, [[do: {:+, _, [1, 2]}]]}] = [] |> rex_data(quote(do: 1 + 2))
   end
 
 end

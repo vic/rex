@@ -50,8 +50,8 @@ defmodule Rex.Fun do
   defp fun_expr({:/, _, [{name, _, nil}, arity]}) when is_atom(name) and arity > 0 do
     vars = for i <- 0..arity-1, do: Macro.var(:"v#{i}", nil)
     quote do
-      fn {[unquote_splicing(Enum.reverse(vars)) | stack], queueram} ->
-        {[unquote(name)(unquote_splicing(vars)) | stack], queueram}
+      fn {[unquote_splicing(Enum.reverse(vars)) | stack], queue} ->
+        {[unquote(name)(unquote_splicing(vars)) | stack], queue}
       end
     end
   end

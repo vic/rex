@@ -120,8 +120,8 @@ defmodule Rex.ExamplesTest do
   end
 
   test "quote pushes the definition environment alongide the quoted code" do
-    assert [{code, env}] = [] |> rex_stack(@[1 + 2])
-    assert {3, _} = Code.eval_quoted(code, [], env)
+    assert [{code, env}] = [] |> rex_stack(@[2 * answer])
+    assert {84, _} = Code.eval_quoted(code, [], env)
   end
 
   test "dequote executes a quoted program on top of stack with the rest of the stack" do

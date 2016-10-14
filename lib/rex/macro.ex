@@ -21,7 +21,7 @@ defmodule Rex.Macro do
   end
 
   @doc false
-  def to_rex_program(elixir_ast, env \\ nil) do
+  def to_rex_program(elixir_ast, env) do
     elixir_ast |> to_rex_ast |> Enum.map(&Rex.Fun.to_fun(&1, env))
   end
 

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Rex by vic</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Rex</h1>
+          <h2>Concatenative Elixir macro language.</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/vic/rex/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/vic/rex/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/vic/rex" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a id="rex---concatenative-elixir-macro-language" class="anchor" href="#rex---concatenative-elixir-macro-language" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Rex - Concatenative elixir macro language.</h1>
+
+<p><img src="https://cloud.githubusercontent.com/assets/331/19221774/310460ee-8e0f-11e6-864b-0a4f2c34b5b2.png" alt="rex"></p>
+
+<p>Rex is a <a href="http://concatenative.org">concatenative language</a> built with Elixir macros.</p>
+
+<p>Being powered by Elixir macros means that Rex has no parser of its own as it just
+uses valid Elixir syntax and thus can be embedded on any elixir program.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p><a href="https://hex.pm/packages/rex">Available in Hex</a>, the package can be installed as:</p>
+
+<ol>
+<li>
+<p>Add <code>rex</code> to your list of dependencies in <code>mix.exs</code>:</p>
+
+<div class="highlight highlight-source-elixir"><pre><span class="pl-k">def</span> <span class="pl-en">deps</span> <span class="pl-k">do</span>
+  [{<span class="pl-c1">:rex</span>, <span class="pl-s"><span class="pl-pds">"</span>~&gt; 0.1.0<span class="pl-pds">"</span></span>}]
+<span class="pl-k">end</span></pre></div>
+</li>
+</ol>
+
+<h2>
+<a id="stack-based" class="anchor" href="#stack-based" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Stack based</h2>
+
+<p>Rex is stack based, that is all Rex functions take a list and return another list.</p>
+
+<p>The topmost element in a stack is the one at index zero, for example, for
+<code>[1, 2, 3]</code> the top of the stack is <code>1</code>. Most Rex functions will operate on
+top-most elements as they need and then push the result back to the top.</p>
+
+<p>Inside the <code>rex</code> macro, the <code>~&gt;</code> operator indicates the order in which to push
+values or operators on to the top of the stack.</p>
+
+<p>For example, <code>rex(1 ~&gt; 2 ~&gt; add)</code> would result on the following 
+<code>[add, 2, 1]</code> stack that when executed will yield <code>[3]</code>.</p>
+
+<p>So the <code>~&gt;</code> allows post-fix notation (operands first, operator last) syntax.
+This is the preferred way as most concatenative languages are postfix, but
+Rex also has a <code>&lt;~</code> operator which just pushes values in the reverse order:
+<code>rex(add &lt;~ 2 &lt;~ 1)</code> will result on <code>[add, 2, 1]</code>.</p>
+
+<p>The following example uses functions from <code>Rex.Core</code> for stack manipulation
+and <code>Rex.Math</code> that defines aliases to standard elixir math operators.</p>
+
+<div class="highlight highlight-source-elixir"><pre>iex<span class="pl-k">&gt;</span> [<span class="pl-c1">4</span>, <span class="pl-c1">5</span>] <span class="pl-k">|</span><span class="pl-k">&gt;</span> rex(<span class="pl-c1">3</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> add <span class="pl-k">~</span><span class="pl-k">&gt;</span> mul <span class="pl-k">~</span><span class="pl-k">&gt;</span> swap)
+[<span class="pl-c1">4</span>, <span class="pl-c1">9</span>, <span class="pl-c1">5</span>] </pre></div>
+
+<p>More examples available as <a href="https://github.com/vic/rex/blob/master/test/rex_test.exs">tests</a></p>
+
+<h2>
+<a id="words" class="anchor" href="#words" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Words</h2>
+
+<p>In concatenative languages, functions are refered to as <em>words</em>.</p>
+
+<p>Inside an Elixir module, once you have <code>include Rex</code>'d
+you can call <code>drex</code> to define a new <em>word</em> that acts either as a
+<em>stack shuffler</em> or as an <em>operator on the stack</em>.</p>
+
+<p>To define a stack <em>shuffling</em> word, the syntax is:</p>
+
+<div class="highlight highlight-source-elixir"><pre><span class="pl-c">    # (example from `Rex.Stack.swap/1`)</span>
+    drex swap(a, b)     (b, a)</pre></div>
+
+<p>To define a stack <em>operator</em> you use the <code>~&gt;</code> or <code>&lt;~</code> syntax:</p>
+
+<div class="highlight highlight-source-elixir"><pre><span class="pl-c">    # pushes 1 then 2 then performs adition</span>
+    drex three        <span class="pl-c1">1</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Kernel</span>.<span class="pl-k">+/</span><span class="pl-c1">2</span>
+
+<span class="pl-c">    # pushes 2 then performs multiplication</span>
+<span class="pl-c">    # expecting a first value already on stack (ie. partial function)</span>
+    drex double       <span class="pl-en">Kernel</span>.<span class="pl-k">*/</span><span class="pl-c1">2</span> <span class="pl-k">&lt;</span><span class="pl-k">~</span> <span class="pl-c1">2</span></pre></div>
+
+<p>As <em>operators</em> are the most frequent types of words you will be creating,
+the following <em>concatenative</em> syntax is supported:</p>
+
+<div class="highlight highlight-source-elixir"><pre><span class="pl-c">    # This will multiply the second element on the stack</span>
+<span class="pl-c">    # and then print the final stack state to stdout.</span>
+    drex double_second  swap double swap show</pre></div>
+
+<p>However, if you want to also push an integer or any other Elixir literal,
+trying something like <code>3 double</code> wont work because its not valid Elixir syntax.
+But you can use the <code>do</code> notation for <code>drex</code>:</p>
+
+<div class="highlight highlight-source-elixir"><pre>      drex sixsix <span class="pl-k">do</span>
+        <span class="pl-c1">3</span>
+        double dup <span class="pl-en">Kernel</span>.<span class="pl-k">*/</span><span class="pl-c1">2</span>
+      <span class="pl-k">end</span></pre></div>
+
+<p>is exactly the same as:</p>
+
+<div class="highlight highlight-source-elixir"><pre>      drex sixsix  <span class="pl-c1">3</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> double <span class="pl-k">~</span><span class="pl-k">&gt;</span> dup <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Kernel</span>.<span class="pl-k">*/</span><span class="pl-c1">2</span></pre></div>
+
+<p>The <code>do</code> form is peferred for large words. Most likely you'll just want to
+keep them short as concatenative programs are very composable.</p>
+
+<h4>
+<a id="pointless-programming" class="anchor" href="#pointless-programming" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="https://en.wikipedia.org/wiki/Tacit_programming">Pointless programming</a>
+</h4>
+
+<p>With Rex you can write point-free functions.</p>
+
+<div class="highlight highlight-source-elixir"><pre>drex sumr     <span class="pl-en">List</span>.foldr<span class="pl-k">/</span><span class="pl-c1">3</span> <span class="pl-k">&lt;</span><span class="pl-k">~</span> (&amp;<span class="pl-en">Kernel</span>.<span class="pl-k">+/</span><span class="pl-c1">2</span>) <span class="pl-k">&lt;</span><span class="pl-k">~</span> <span class="pl-c1">0</span>
+
+assert [<span class="pl-c1">6</span>] <span class="pl-k">==</span> sumr([<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>])</pre></div>
+        </section>
+
+        <footer>
+          Rex is maintained by <a href="https://github.com/vic">vic</a><br>
+          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,5 +1,8 @@
 # Rex - Concatenative elixir macro language.
 
+<a href="https://travis-ci.org/vic/rex"><img src="https://travis-ci.org/vic/rex.svg"></a>
+
+
 ![rex](https://cloud.githubusercontent.com/assets/331/19221774/310460ee-8e0f-11e6-864b-0a4f2c34b5b2.png)
 
 Rex is a [concatenative language](http://concatenative.org) built with Elixir macros.
